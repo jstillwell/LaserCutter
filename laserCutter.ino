@@ -1,11 +1,37 @@
+/*
+ * 
+The MIT License (MIT)
+
+Copyright (c) 2015 John Stillwell
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ * 
+ */
+
 #include <Wire.h>
 #include <Adafruit_MotorShield.h>
 #include "utility/Adafruit_PWMServoDriver.h"
 #include <SoftwareSerial.h>
 #include "ESP8266.h"
 
-#define SSID        "T6QMH"
-#define PASSWORD    "95NQSG77N4D953M6"
+#define SSID        "wifi"
+#define PASSWORD    "password"
 
 SoftwareSerial wifiSerial(8,9);
 ESP8266 wifi(wifiSerial);
@@ -17,7 +43,8 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 
 // Connect a stepper motor with 200 steps per revolution (1.8 degree)
 // to motor port #2 (M3 and M4)
-Adafruit_StepperMotor *myMotor = AFMS.getStepper(200, 2);
+Adafruit_StepperMotor *verticalMotor = AFMS.getStepper(200, 1);
+Adafruit_StepperMotor *baseMotor = AFMS.getStepper(200, 2);
 
 void setup() {
   Serial.begin(9600);           // set up Serial library at 9600 bps
@@ -67,7 +94,8 @@ void setup() {
   AFMS.begin();  // create with the default frequency 1.6KHz
   //AFMS.begin(1000);  // OR with a different frequency, say 1KHz
   
-  myMotor->setSpeed(10);  // 10 rpm   
+  verticalMotor->setSpeed(10);  // 10 rpm   
+  baseMotor->setSpeed(10);
 }
 
 void loop() {
@@ -87,7 +115,8 @@ void loop() {
         if (req.indexOf("/greeting/0") != -1){
           int strStart = req.indexOf("/greeting/0");
           int strEnd = req.indexOf("/\r/0");
-          val = "greeting= " + req.substring(strStart, strEnd);    
+          val = "greeting= " + req.substring(strStart, strEnd);
+          startTest();
         }
         else {
           Serial.println("Greeting not found");
@@ -123,20 +152,20 @@ void loop() {
 }
 
 void startTest(){
-   Serial.println("Single coil steps");
-  myMotor->step(100, FORWARD, SINGLE); 
-  myMotor->step(100, BACKWARD, SINGLE); 
+  Serial.println("Single coil steps");
+  baseMotor->step(100, FORWARD, SINGLE); 
+  baseMotor->step(100, BACKWARD, SINGLE); 
 
   Serial.println("Double coil steps");
-  myMotor->step(100, FORWARD, DOUBLE); 
-  myMotor->step(100, BACKWARD, DOUBLE);
+  verticalMotor->step(100, FORWARD, DOUBLE); 
+  baseMotor->step(100, BACKWARD, DOUBLE);
   
   Serial.println("Interleave coil steps");
-  myMotor->step(100, FORWARD, INTERLEAVE); 
-  myMotor->step(100, BACKWARD, INTERLEAVE); 
+  baseMotor->step(100, FORWARD, INTERLEAVE); 
+  baseMotor->step(100, BACKWARD, INTERLEAVE); 
   
   Serial.println("Microstep steps");
-  myMotor->step(50, FORWARD, MICROSTEP); 
-  myMotor->step(50, BACKWARD, MICROSTEP);
+  verticalMotor->step(50, FORWARD, MICROSTEP); 
+  verticalMotor->step(50, BACKWARD, MICROSTEP);
 }
 
